@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const tokenService = require('../services/tokenService');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 
@@ -19,7 +19,7 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = tokenService.verifyAccessToken(token);
 
     // Get user from token
     const user = await User.findById(decoded.userId).select('-password');
@@ -34,7 +34,14 @@ const protect = async (req, res, next) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Account is deactivated'
+        message: 'Account is deactivated. Please contact support.'
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(401).json({
+        success: false,
+        message: 'Please verify your email before continuing'
       });
     }
 
@@ -77,4 +84,29 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { protect, authorize };
+// Rate limit for authentication attempts
+const authRateLimit = new Map();
+
+const preventBruteForce = (req, res, next) => {
+  const ip = req.ip;
+  const attempts = authRateLimit.get(ip) || { count: 0, firstAttempt: Date.now() };
+  
+  // Reset after 15 minutes
+  if (Date.now() - attempts.firstAttempt > 15 * 60 * 1000) {
+    attempts.count = 0;
+    attempts.firstAttempt = Date.now();
+  }
+  
+  if (attempts.count >= 5) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many login attempts. Please try again later.'
+    });
+  }
+  
+  attempts.count++;
+  authRateLimit.set(ip, attempts);
+  next();
+};
+
+module.exports = { protect, authorize, preventBruteForce };
