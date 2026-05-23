@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, Layout, TrendingUp, DollarSign, 
@@ -124,11 +125,44 @@ const AdminDashboard = () => {
               </div>
               <p className="text-2xl font-bold">{card.value}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{card.title}</p>
+=======
+import React from 'react';
+import Card, { CardContent, CardHeader } from '../ui/Card';
+import { Users, FileText, Layout, TrendingUp, DollarSign } from 'lucide-react';
+
+const AdminDashboard = () => {
+  const stats = [
+    { title: 'Total Users', value: '1,234', icon: Users, color: 'bg-blue-500' },
+    { title: 'Total Resumes', value: '5,678', icon: FileText, color: 'bg-green-500' },
+    { title: 'Total Portfolios', value: '3,456', icon: Layout, color: 'bg-purple-500' },
+    { title: 'Revenue', value: '$12,345', icon: DollarSign, color: 'bg-yellow-500' },
+    { title: 'Avg ATS Score', value: '78%', icon: TrendingUp, color: 'bg-orange-500' },
+  ];
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        {stats.map((stat, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">{stat.title}</p>
+                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                </div>
+                <div className={`${stat.color} p-2 rounded-lg text-white`}>
+                  <stat.icon className="w-5 h-5" />
+                </div>
+              </div>
+>>>>>>> 804ddfb (changes)
             </CardContent>
           </Card>
         ))}
       </div>
 
+<<<<<<< HEAD
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth Chart */}
@@ -173,11 +207,15 @@ const AdminDashboard = () => {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Users */}
+=======
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+>>>>>>> 804ddfb (changes)
         <Card>
           <CardHeader>
             <h3 className="text-lg font-semibold">Recent Users</h3>
           </CardHeader>
           <CardContent>
+<<<<<<< HEAD
             <div className="space-y-3">
               {stats?.recent?.users?.slice(0, 5).map((user) => (
                 <div key={user._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -233,6 +271,18 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
+=======
+            <p className="text-gray-500 text-center py-8">No recent users to display</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold">System Activity</h3>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500 text-center py-8">No recent activity</p>
+>>>>>>> 804ddfb (changes)
           </CardContent>
         </Card>
       </div>

@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { Search, Filter, Edit2, Trash2, Eye, Shield, UserX, UserCheck } from 'lucide-react';
 import api from '../../services/api';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Card, { CardContent, CardHeader } from '../ui/Card';
+=======
+import Card, { CardContent, CardHeader } from '../ui/Card';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
+import { Search, Edit2, Trash2, UserCheck, UserX } from 'lucide-react';
+import api from '../../services/api';
+>>>>>>> 804ddfb (changes)
 import { toast } from 'sonner';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+<<<<<<< HEAD
   const [filters, setFilters] = useState({ role: '', subscription: '', isActive: '' });
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
   const [selectedUser, setSelectedUser] = useState(null);
@@ -39,11 +48,26 @@ const UserManagement = () => {
       }));
     } catch (error) {
       toast.error('Failed to fetch users');
+=======
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/admin/users');
+      setUsers(response.data.data?.users || []);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      toast.error('Failed to load users');
+>>>>>>> 804ddfb (changes)
     } finally {
       setLoading(false);
     }
   };
 
+<<<<<<< HEAD
   const handleUpdateUser = async (userId, updates) => {
     try {
       await api.put(`/admin/users/${userId}`, updates);
@@ -52,11 +76,24 @@ const UserManagement = () => {
       setShowEditModal(false);
     } catch (error) {
       toast.error('Failed to update user');
+=======
+  const handleToggleStatus = async (userId, currentStatus) => {
+    try {
+      await api.put(`/admin/users/${userId}`, { isActive: !currentStatus });
+      toast.success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      fetchUsers();
+    } catch (error) {
+      toast.error('Failed to update user status');
+>>>>>>> 804ddfb (changes)
     }
   };
 
   const handleDeleteUser = async (userId, userName) => {
+<<<<<<< HEAD
     if (confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+=======
+    if (window.confirm(`Are you sure you want to delete ${userName}?`)) {
+>>>>>>> 804ddfb (changes)
       try {
         await api.delete(`/admin/users/${userId}`);
         toast.success('User deleted successfully');
@@ -67,6 +104,7 @@ const UserManagement = () => {
     }
   };
 
+<<<<<<< HEAD
   const getRoleBadge = (role) => {
     const colors = {
       admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
@@ -151,21 +189,58 @@ const UserManagement = () => {
       </Card>
 
       {/* Users Table */}
+=======
+  const filteredUsers = users.filter(user =>
+    user.name?.toLowerCase().includes(search.toLowerCase()) ||
+    user.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">User Management</h1>
+        <div className="w-64">
+          <Input
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            icon={Search}
+          />
+        </div>
+      </div>
+
+>>>>>>> 804ddfb (changes)
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800 border-b">
               <tr>
                 <th className="text-left p-4">User</th>
+<<<<<<< HEAD
                 <th className="text-left p-4">Role</th>
                 <th className="text-left p-4">Plan</th>
                 <th className="text-left p-4">Status</th>
                 <th className="text-left p-4">Joined</th>
                 <th className="text-left p-4">Last Active</th>
+=======
+                <th className="text-left p-4">Email</th>
+                <th className="text-left p-4">Role</th>
+                <th className="text-left p-4">Status</th>
+                <th className="text-left p-4">Joined</th>
+>>>>>>> 804ddfb (changes)
                 <th className="text-left p-4">Actions</th>
               </tr>
             </thead>
             <tbody>
+<<<<<<< HEAD
               {loading ? (
                 <tr>
                   <td colSpan="7" className="text-center p-8">
@@ -175,10 +250,16 @@ const UserManagement = () => {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center p-8 text-gray-500">
+=======
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center p-8 text-gray-500">
+>>>>>>> 804ddfb (changes)
                     No users found
                   </td>
                 </tr>
               ) : (
+<<<<<<< HEAD
                 users.map((user) => (
                   <tr key={user._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <td className="p-4">
@@ -189,15 +270,32 @@ const UserManagement = () => {
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${getRoleBadge(user.role)}`}>
+=======
+                filteredUsers.map((user) => (
+                  <tr key={user._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="p-4">
+                      <div className="font-medium">{user.name}</div>
+                    </td>
+                    <td className="p-4 text-sm">{user.email}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        user.role === 'admin' 
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+>>>>>>> 804ddfb (changes)
                         {user.role}
                       </span>
                     </td>
                     <td className="p-4">
+<<<<<<< HEAD
                       <span className={`px-2 py-1 text-xs rounded-full ${getSubscriptionBadge(user.subscriptionTier)}`}>
                         {user.subscriptionTier}
                       </span>
                     </td>
                     <td className="p-4">
+=======
+>>>>>>> 804ddfb (changes)
                       {user.isActive ? (
                         <span className="flex items-center gap-1 text-green-600">
                           <UserCheck className="w-4 h-4" />
@@ -213,6 +311,7 @@ const UserManagement = () => {
                     <td className="p-4 text-sm">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
+<<<<<<< HEAD
                     <td className="p-4 text-sm">
                       {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                     </td>
@@ -232,6 +331,21 @@ const UserManagement = () => {
                           onClick={() => handleDeleteUser(user._id, user.name)}
                           className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded text-red-600"
                           title="Delete User"
+=======
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleToggleStatus(user._id, user.isActive)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title={user.isActive ? 'Deactivate' : 'Activate'}
+                        >
+                          {user.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user._id, user.name)}
+                          className="p-1 hover:bg-red-100 rounded text-red-600"
+                          title="Delete"
+>>>>>>> 804ddfb (changes)
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -244,6 +358,7 @@ const UserManagement = () => {
           </table>
         </CardContent>
       </Card>
+<<<<<<< HEAD
 
       {/* Pagination */}
       {pagination.pages > 1 && (
@@ -366,6 +481,8 @@ const EditUserModal = ({ user, onClose, onSave }) => {
           </div>
         </form>
       </div>
+=======
+>>>>>>> 804ddfb (changes)
     </div>
   );
 };

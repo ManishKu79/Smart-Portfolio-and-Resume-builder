@@ -1,7 +1,12 @@
 const User = require('../models/User');
+<<<<<<< HEAD
 const tokenService = require('../services/tokenService');
 const emailService = require('../services/emailService');
+=======
+const jwt = require('jsonwebtoken');
+>>>>>>> 804ddfb (changes)
 const logger = require('../utils/logger');
+const emailService = require('../services/emailService');
 
 class AuthController {
   // Register new user
@@ -9,6 +14,7 @@ class AuthController {
     try {
       const { name, email, password } = req.body;
 
+<<<<<<< HEAD
       // Check if user already exists
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -16,6 +22,60 @@ class AuthController {
           success: false,
           message: 'User already exists with this email'
         });
+=======
+// Generate Refresh Token
+const generateRefreshToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d'
+  });
+};
+
+// Register user
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email'
+      });
+    }
+
+    // Create new user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      isVerified: true // Auto-verify users on registration
+    });
+
+    // Generate tokens
+    const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Store refresh token
+    await user.addRefreshToken(refreshToken, req.headers['user-agent'], req.ip);
+
+    // Add login history
+    await user.addLoginHistory(req.ip, req.headers['user-agent'], true);
+
+    // Remove password from response
+    const userData = user.toObject();
+    delete userData.password;
+
+    logger.info(`New user registered: ${email}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful!',
+      data: {
+        user: userData,
+        token,
+        refreshToken
+>>>>>>> 804ddfb (changes)
       }
 
       // Create new user
@@ -75,6 +135,7 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
+<<<<<<< HEAD
       // Check if user exists
       const user = await User.findOne({ email }).select('+password');
       if (!user) {
@@ -83,16 +144,293 @@ class AuthController {
           success: false,
           message: 'Invalid email or password'
         });
+=======
+    // Check if user exists
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      await exports.logFailedLoginAttempt(email, req);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check if account is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.'
+      });
+    }
+
+    // Check password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      await exports.logFailedLoginAttempt(email, req);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // REMOVED: Email verification check - users can login without verification
+    // Users can now login immediately after registration
+
+    // Generate tokens
+    const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Store refresh token
+    await user.addRefreshToken(refreshToken, req.headers['user-agent'], req.ip);
+
+    // Update login tracking
+    await user.incrementLoginCount();
+    await user.addLoginHistory(req.ip, req.headers['user-agent'], true);
+
+    // Remove password from response
+    const userData = user.toObject();
+    delete userData.password;
+
+    logger.info(`User logged in: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: userData,
+        token,
+        refreshToken
+>>>>>>> 804ddfb (changes)
       }
 
+<<<<<<< HEAD
       // Check if account is active
       if (!user.isActive) {
         return res.status(401).json({
           success: false,
           message: 'Account is deactivated. Please contact support.'
         });
+=======
+// Log failed login attempt
+exports.logFailedLoginAttempt = async (email, req) => {
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      await user.addLoginHistory(req.ip, req.headers['user-agent'], false);
+    }
+  } catch (error) {
+    logger.error('Failed to log login attempt:', error);
+  }
+};
+
+// Verify email (optional - can be kept for manual verification if needed)
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const crypto = require('crypto');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    user.isVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save();
+
+    await emailService.sendWelcomeEmail(user);
+
+    logger.info(`Email verified for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully!'
+    });
+  } catch (error) {
+    logger.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Email verification failed',
+      error: error.message
+    });
+  }
+};
+
+// Resend verification email (optional)
+exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already verified'
+      });
+    }
+
+    const verificationToken = user.generateEmailVerificationToken();
+    await user.save();
+    await emailService.sendVerificationEmail(user, verificationToken);
+
+    res.json({
+      success: true,
+      message: 'Verification email sent successfully'
+    });
+  } catch (error) {
+    logger.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification email'
+    });
+  }
+};
+
+// Forgot password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.json({
+        success: true,
+        message: 'If your email is registered, you will receive a password reset link'
+      });
+    }
+
+    const resetToken = user.generatePasswordResetToken();
+    await user.save();
+    await emailService.sendPasswordResetEmail(user, resetToken);
+
+    res.json({
+      success: true,
+      message: 'Password reset email sent successfully'
+    });
+  } catch (error) {
+    logger.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process request'
+    });
+  }
+};
+
+// Reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const crypto = require('crypto');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    user.refreshTokens = [];
+    await user.save();
+
+    logger.info(`Password reset for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Password reset successful! You can now login with your new password.'
+    });
+  } catch (error) {
+    logger.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset password'
+    });
+  }
+};
+
+// Refresh token
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token required'
+      });
+    }
+
+    const crypto = require('crypto');
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+    
+    const user = await User.findOne({
+      _id: decoded.userId,
+      'refreshTokens.token': hashedToken,
+      'refreshTokens.expiresAt': { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token'
+      });
+    }
+
+    const newAccessToken = generateToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    await user.removeRefreshToken(refreshToken);
+    await user.addRefreshToken(newRefreshToken, req.headers['user-agent'], req.ip);
+
+    res.json({
+      success: true,
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+>>>>>>> 804ddfb (changes)
       }
 
+<<<<<<< HEAD
       // Check password
       const isPasswordValid = await user.comparePassword(password);
       if (!isPasswordValid) {
@@ -150,8 +488,68 @@ class AuthController {
         error: error.message
       });
     }
+=======
+// Logout
+exports.logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (refreshToken && req.user) {
+      await req.user.removeRefreshToken(refreshToken);
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    logger.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed'
+    });
+  }
+};
+
+// Logout from all devices
+exports.logoutAll = async (req, res) => {
+  try {
+    req.user.refreshTokens = [];
+    await req.user.save();
+
+    res.json({
+      success: true,
+      message: 'Logged out from all devices successfully'
+    });
+  } catch (error) {
+    logger.error('Logout all error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to logout from all devices'
+    });
+  }
+};
+
+// Get current user
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password -refreshTokens -emailVerificationToken -passwordResetToken');
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    logger.error('Get user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user'
+    });
+>>>>>>> 804ddfb (changes)
   }
 
+<<<<<<< HEAD
   // Log failed login attempt
   async logFailedLoginAttempt(email, req) {
     try {
@@ -162,6 +560,57 @@ class AuthController {
     } catch (error) {
       logger.error('Failed to log login attempt:', error);
     }
+=======
+// Change password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user._id).select('+password');
+
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    user.refreshTokens = [];
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    logger.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password'
+    });
+  }
+};
+
+// Get login history
+exports.getLoginHistory = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('loginHistory');
+    
+    res.json({
+      success: true,
+      data: user.loginHistory
+    });
+  } catch (error) {
+    logger.error('Get login history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch login history'
+    });
+>>>>>>> 804ddfb (changes)
   }
 
   // Verify email

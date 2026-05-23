@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
@@ -213,6 +214,24 @@ class EmailService {
       html,
       text: 'Welcome to PortfolioBuilder! Login to start building your portfolio.'
     });
+=======
+const logger = require('../utils/logger');
+
+class EmailService {
+  async sendVerificationEmail(user, token) {
+    logger.info(`Verification email would be sent to ${user.email} with token ${token}`);
+    return { success: true };
+  }
+
+  async sendPasswordResetEmail(user, token) {
+    logger.info(`Password reset email would be sent to ${user.email} with token ${token}`);
+    return { success: true };
+  }
+
+  async sendWelcomeEmail(user) {
+    logger.info(`Welcome email would be sent to ${user.email}`);
+    return { success: true };
+>>>>>>> 804ddfb (changes)
   }
 }
 

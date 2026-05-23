@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+<<<<<<< HEAD
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -9,6 +10,14 @@ const path = require('path');
 
 const databaseManager = require('./config/database');
 const dbOptimizer = require('./utils/dbOptimizer');
+=======
+const compression = require('compression');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
+
+>>>>>>> 804ddfb (changes)
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -17,6 +26,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
 const portfolioRoutes = require('./routes/portfolioRoutes');
+<<<<<<< HEAD
 const pdfRoutes = require('./routes/pdfRoutes');
 
 const app = express();
@@ -32,6 +42,11 @@ databaseManager.connect().then(async () => {
   }
 });
 
+=======
+
+const app = express();
+
+>>>>>>> 804ddfb (changes)
 // Middleware
 app.use(helmet());
 app.use(compression());
@@ -42,6 +57,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+<<<<<<< HEAD
 app.use(mongoSanitize());
 app.use(xss());
 
@@ -54,6 +70,8 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use('/api', limiter);
+=======
+>>>>>>> 804ddfb (changes)
 
 // Request logging
 app.use((req, res, next) => {
@@ -62,12 +80,19 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint
+<<<<<<< HEAD
 app.get('/health', async (req, res) => {
   const dbStatus = databaseManager.getConnectionStatus();
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     database: dbStatus,
+=======
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+>>>>>>> 804ddfb (changes)
     uptime: process.uptime()
   });
 });
@@ -77,7 +102,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/portfolios', portfolioRoutes);
+<<<<<<< HEAD
 app.use('/api/pdf', pdfRoutes);
+=======
+
+>>>>>>> 804ddfb (changes)
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({

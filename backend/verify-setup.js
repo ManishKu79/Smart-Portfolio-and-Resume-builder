@@ -1,34 +1,47 @@
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const dotenv = require('dotenv');
 
-dotenv.config();
+// Load test environment variables
+dotenv.config({ path: '.env.test' });
 
-console.log('🔍 Verifying Backend Setup...\n');
+// Set test environment
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_12345';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test_refresh_secret_key_67890';
 
-// Check environment variables
-console.log('📝 Checking environment variables:');
-const requiredEnv = ['PORT', 'MONGODB_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
-requiredEnv.forEach(env => {
-  if (process.env[env]) {
-    console.log(`✅ ${env} is set`);
-  } else {
-    console.log(`❌ ${env} is missing`);
+let mongod;
+
+beforeAll(async () => {
+  // Create in-memory database for tests
+  mongod = await MongoMemoryServer.create();
+  const uri = mongod.getUri();
+  await mongoose.connect(uri);
+});
+
+afterAll(async () => {
+  await mongoose.disconnect();
+  if (mongod) {
+    await mongod.stop();
   }
 });
 
-// Check MongoDB connection
-console.log('\n🗄️  Checking MongoDB connection...');
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('✅ MongoDB connection successful');
-    mongoose.connection.close();
-  })
-  .catch(err => {
-    console.log('❌ MongoDB connection failed:', err.message);
-  });
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    if (collections[key]) {
+      await collections[key].deleteMany({});
+    }
+  }
+});
 
-console.log('\n✅ Setup verification complete!');
-console.log('\n📋 Next steps:');
-console.log('1. Run: npm run dev');
-console.log('2. Test API: curl http://localhost:5000/health');
-console.log('3. Test registration: POST http://localhost:5000/api/auth/register');
+// Suppress console logs during tests (optional)
+global.console = {
+  ...console,
+  log: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  // Keep error and warn for debugging
+  error: console.error,
+  warn: console.warn,
+};
